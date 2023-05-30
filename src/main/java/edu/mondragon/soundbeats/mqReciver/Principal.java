@@ -19,7 +19,7 @@ public class Principal {
 
 	private static final String EXCHANGE_NAME = "diagnostico";
 	private final static String EXCHANGE_RESULTADO = "categorias";
-	String pythonInterpreter = "C:/Users/lamaa/anaconda3/python.exe"; //CAMBIAR AL INTERPRETE IMPORTADO
+	String pythonInterpreter = "python"; //CAMBIAR AL INTERPRETE IMPORTADO
 	String pythonFile = "../SoundBeats/src/main/java/edu/mondragon/soundbeats/IA/main.py";
 	String outputFilePath = "src/resources/audios/";
 	private ConnectionFactory factory;
@@ -67,8 +67,8 @@ public class Principal {
 			String message = new String(body, StandardCharsets.UTF_8);
 			Consulta consulta = gson.fromJson(message, Consulta.class);
 
-			//System.out.println("Mensaje recibido (JSON): " + consulta.getPacienteID());
-			 System.out.println("Mensaje recibido (JSON): ha lleado " );
+			System.out.println("Mensaje recibido (JSON): " + consulta.getPacienteID());
+			System.out.println("Mensaje recibido (JSON): ha lleado " );
 			try {
 				// Decode the Base64 string
 				byte[] decodedBytes = Base64.getDecoder().decode(consulta.getAudio());
@@ -111,7 +111,7 @@ public class Principal {
 				String gravedad = (enfermedad == 0) ? "normal" : (enfermedad == 3) ? "normal" : "grave";
 
 				String topic = String.format("%s.%s.%s", "respuesta", consulta.getPacienteID(), gravedad);
-				//System.out.println(topic);
+				System.out.println(topic);
 
 				this.getChannel().basicPublish(EXCHANGE_RESULTADO, topic, null,
 						gson.toJson(consulta).getBytes("UTF-8"));
