@@ -52,7 +52,8 @@ public class principal2 {
         }
 
         @Override
-        public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
+        
+        public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties, byte[] body) {
             String message = new String(body, StandardCharsets.UTF_8);
             System.out.println("Mensaje recibido (JSON): " + message);
         }
