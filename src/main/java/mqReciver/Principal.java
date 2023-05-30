@@ -117,7 +117,7 @@ public class Principal {
 			try {
 				
 				consulta = gson.fromJson(message, Consulta.class);
-				System.out.println("Mensaje recibido (JSON): " + consulta.getAudio() + consulta.getPacienteID());
+				System.out.println("Mensaje recibido (JSON): " + consulta.getPacienteID());//la puta linea que metia el base64
 				
 				// Decode the Base64 string
 				decodedBytes = Base64.getDecoder().decode(consulta.getAudio());
