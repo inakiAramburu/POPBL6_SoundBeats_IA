@@ -69,7 +69,7 @@ public class Principal {
 			channel.basicConsume(QUEUE_NAME, autoAck, consumer);
 			
 
-			/*synchronized (this) {
+			synchronized (this) {
 				try {
 					this.wait();
 				} catch (InterruptedException e) {
@@ -77,12 +77,8 @@ public class Principal {
 					e.printStackTrace();
 				}
 			}
-			channel.basicCancel(tag);
-			channel.close();*/
 
 			System.out.println("Esperando mensaje");
-            Scanner scanner = new Scanner(System.in);
-            scanner.nextLine();
 
 		} catch (IOException | TimeoutException e) {
 			((Throwable) e).printStackTrace();
@@ -117,15 +113,15 @@ public class Principal {
 			try {
 				
 				consulta = gson.fromJson(message, Consulta.class);
-				System.out.println("Mensaje recibido (JSON): " + consulta.getAudio() + consulta.getPacienteID());
+				System.out.println("Mensaje recibido (JSON): " + consulta.getPacienteID());
 				
 				// Decode the Base64 string
 				decodedBytes = Base64.getDecoder().decode(consulta.getAudio());
-				decodedString = new String(decodedBytes);
+				//decodedString = new String(decodedBytes);
 				FileOutputStream outputStream = new FileOutputStream(outputFilePath + consulta.getPacienteID()+".waw");
 	            outputStream.write(decodedBytes);
 	            outputStream.close();
-				//decodedString = "random";
+				decodedString = "random";
 				
 
 				// Construir el comando de ejecución
@@ -144,8 +140,9 @@ public class Principal {
 				System.out.println("Salida estándar del proceso:");
 				while ((line = stdoutReader.readLine()) != null) {
 					System.out.println(line);
+					consulta.setEnfermedad(line);
 				}
-
+			
 				// Esperar a que el proceso termine
 				exitCode = process.waitFor();
 				System.out.println("El proceso ha finalizado con código de salida: " + exitCode);
@@ -164,10 +161,15 @@ public class Principal {
 
 				String topic = String.format("%s.%s.%s", "respuesta", gravedad, consulta.getPacienteID());
 				System.out.println(topic);
-				consulta.setEnfermedad(line);
-				// consulta.setEnfermedad("murmur");
+				//consulta.setEnfermedad(line);
+				//consulta.setEnfermedad("murmur");
+				boolean multiple = false;
+				System.out.println(consulta.getEnfermedad());
+				
 				this.getChannel().basicPublish(EXCHANGE_RESULTADO, topic, null, gson.toJson(consulta).getBytes("UTF-8"));
 
+				this.getChannel().basicAck(envelope.getDeliveryTag(), multiple);
+	
 			} 
 			catch (IOException e) {
 				System.out.println("Error while decoding Base64: " + e.getMessage());
@@ -207,7 +209,7 @@ public class Principal {
 			if (intentos == null) intentos = 1;
 
 			
-			System.out.println("ERROR: No se ha podido procesar "+message+" intentos: "+intentos);
+			System.out.println("ERROR: No se ha podido procesar "+ message +" intentos: "+intentos);
 			
 			if (intentos  == MAX_INTENTOS) {
 				reprocesar = false;

@@ -11,6 +11,12 @@ public class Consulta {
     private String audio;
     private String enfermedad;
 
+
+	public Consulta(String pacienteID, String audio) {
+        this.nuss = pacienteID;
+        this.audio = audio;
+    }
+	
     public String getEnfermedad() {
 		return enfermedad;
 	}
@@ -18,11 +24,6 @@ public class Consulta {
 	public void setEnfermedad(String enfermedad) {
 		this.enfermedad = enfermedad;
 	}
-
-	public Consulta(String pacienteID, String audio) {
-        this.nuss = pacienteID;
-        this.audio = audio;
-    }
 
     public String getPacienteID() {
         return nuss;
