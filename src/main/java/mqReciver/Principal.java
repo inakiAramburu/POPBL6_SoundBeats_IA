@@ -141,9 +141,9 @@ public class Principal {
 				stderrReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
 
 				// Leer la salida estándar
-				System.out.println("Salida estándar del proceso:");
+				//System.out.println("Salida estándar del proceso:");
 				while ((line = stdoutReader.readLine()) != null) {
-					System.out.println(line);
+					//System.out.println(line);
 				}
 
 				// Esperar a que el proceso termine
@@ -163,37 +163,37 @@ public class Principal {
 				String gravedad = (grave) ? "grave" : "normal";
 
 				String topic = String.format("%s.%s.%s", "respuesta", gravedad, consulta.getPacienteID());
-				System.out.println(topic);
+				//System.out.println(topic);
 				consulta.setEnfermedad(line);
 				// consulta.setEnfermedad("murmur");
 				this.getChannel().basicPublish(EXCHANGE_RESULTADO, topic, null, gson.toJson(consulta).getBytes("UTF-8"));
 
 			} 
 			catch (IOException e) {
-				System.out.println("Error while decoding Base64: " + e.getMessage());
+				//System.out.println("Error while decoding Base64: " + e.getMessage());
 				handleFail(message , envelope);
 
 			} 
 			catch (InterruptedException e) {
 				// TODO Auto-generated catch block
-				System.out.println("Interrupted : " + e.getMessage());
+				//System.out.println("Interrupted : " + e.getMessage());
 				handleFail(message , envelope);
 			}
 			catch (JsonSyntaxException e) {
 			    // Manejar la excepción de sintaxis JSON
-			    System.out.println("Error de sintaxis JSON: " + e.getMessage());
+			    //System.out.println("Error de sintaxis JSON: " + e.getMessage());
 				handleFail(message , envelope);
 			    // O realizar cualquier otra tarea de manejo de errores
 			}
 			catch (IllegalArgumentException e) {
 			    // Handle invalid Base64 input
-			    System.out.println("Invalid Base64 input: " + e.getMessage());
+			    //System.out.println("Invalid Base64 input: " + e.getMessage());
 			    handleFail(message , envelope);
 			    // Perform error handling or return an error response
 			    // ...
 			}/*catch (JsonIOException e) {
 			    // Manejar la excepción de entrada/salida JSON
-			    System.out.println("Error de entrada/salida JSON: " + e.getMessage());
+			    //System.out.println("Error de entrada/salida JSON: " + e.getMessage());
 			    // O realizar cualquier otra tarea de manejo de errores
 			}*/
 
@@ -207,7 +207,7 @@ public class Principal {
 			if (intentos == null) intentos = 1;
 
 			
-			System.out.println("ERROR: No se ha podido procesar "+message+" intentos: "+intentos);
+			/System.out.println("ERROR: No se ha podido procesar "+" intentos: "+intentos);
 			
 			if (intentos  == MAX_INTENTOS) {
 				reprocesar = false;
