@@ -47,7 +47,7 @@ public class Principal {
 			boolean autoAck = true;
 			channel.basicConsume(queueName, autoAck, consumer);
 
-			System.out.println("Esperando mensaje. Pulsa return para terminar2");
+			System.out.println("Esperando mensaje2. Pulsa return para terminar2");
 			Scanner scanner = new Scanner(System.in);
 			scanner.nextLine();
 
