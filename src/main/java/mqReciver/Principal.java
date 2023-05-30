@@ -207,7 +207,7 @@ public class Principal {
 			if (intentos == null) intentos = 1;
 
 			
-			/System.out.println("ERROR: No se ha podido procesar "+" intentos: "+intentos);
+			System.out.println("ERROR: No se ha podido procesar "+" intentos: "+intentos);
 			
 			if (intentos  == MAX_INTENTOS) {
 				reprocesar = false;
