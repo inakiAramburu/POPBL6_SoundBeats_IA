@@ -9,16 +9,14 @@ import com.google.gson.Gson;
 import com.google.gson.JsonIOException;
 import com.google.gson.JsonSyntaxException;
 import com.rabbitmq.client.*;
-import com.rabbitmq.client.AMQP.BasicProperties;
 import java.util.Random;
-import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
 import java.io.BufferedReader;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
-
+import com.rabbitmq.client.Consumer;
 
 public class Principal {
 
@@ -50,24 +48,24 @@ public class Principal {
 			channel.exchangeDeclare(EXCHANGE_NAME, "direct", false);
 			channel.exchangeDeclare(EXCHANGE_RESULTADO, "topic");
 			channel.exchangeDeclare(DLX_NAME, "fanout");
-			
+
 			boolean durable = false;
 			boolean exclusive = false;
 			boolean autodelete = false;
-			Map<String,Object> arguments = new HashMap<>();
+			Map<String, Object> arguments = new HashMap<>();
 			arguments.put("x-dead-letter-exchange", DLX_NAME);
-			
-			channel.queueDeclare(QUEUE_NAME, durable, exclusive,autodelete, arguments); //Declara la cola de la cual va a consumir el suscribir
-			
-			//String queueName = channel.queueDeclare().getQueue();
+
+			channel.queueDeclare(QUEUE_NAME, durable, exclusive, autodelete, arguments); // Declara la cola de la cual
+																							// va a consumir el
+																							// suscribir
+
+			// String queueName = channel.queueDeclare().getQueue();
 			channel.queueBind(QUEUE_NAME, EXCHANGE_NAME, "new-routing-key");
-			
 
 			channel.basicQos(1);
 			MyConsumer consumer = new MyConsumer(channel);
 			boolean autoAck = false;
 			channel.basicConsume(QUEUE_NAME, autoAck, consumer);
-			
 
 			synchronized (this) {
 				try {
@@ -86,18 +84,18 @@ public class Principal {
 	}
 
 	public class MyConsumer extends DefaultConsumer {
-		
+
 		ConcurrentMap<String, Integer> contadores;
 
 		public MyConsumer(Channel channel) {
-			
+
 			super(channel);
 			contadores = new ConcurrentHashMap<>();
 		}
 
-		@Override
-		public void handleDelivery(String consumerTag, Envelope envelope, BasicProperties properties, byte[] body) throws IOException {
-			
+		public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body)
+				throws IOException {
+
 			String message = new String(body, StandardCharsets.UTF_8);
 			Consulta consulta;
 			byte[] decodedBytes;
@@ -111,22 +109,21 @@ public class Principal {
 			int exitCode;
 
 			try {
-				
+
 				consulta = gson.fromJson(message, Consulta.class);
 				System.out.println("Mensaje recibido (JSON): " + consulta.getPacienteID());
-				
+
 				// Decode the Base64 string
 				decodedBytes = Base64.getDecoder().decode(consulta.getAudio());
-				//decodedString = new String(decodedBytes);
-				FileOutputStream outputStream = new FileOutputStream(outputFilePath + consulta.getPacienteID()+".waw");
-	            outputStream.write(decodedBytes);
-	            outputStream.close();
+				decodedString = new String(decodedBytes);
+				FileOutputStream outputStream = new FileOutputStream(
+						outputFilePath + consulta.getPacienteID() + ".wav");
+				outputStream.write(decodedBytes);
+				outputStream.close();
 				decodedString = "random";
-				
 
 				// Construir el comando de ejecución
 				command = new String[] { pythonInterpreter, pythonFile, decodedString };
-
 
 				// Crear el proceso y ejecutar el comando
 				processBuilder = new ProcessBuilder(command);
@@ -142,18 +139,17 @@ public class Principal {
 					System.out.println(line);
 					consulta.setEnfermedad(line);
 				}
-			
+
 				// Esperar a que el proceso termine
 				exitCode = process.waitFor();
 				System.out.println("El proceso ha finalizado con código de salida: " + exitCode);
 
 				// Save the decoded bytes to a .wav file
 
-				/*
-				 * FileOutputStream outputStream = new FileOutputStream(outputFilePath);
-				 * outputStream.write(decodedBytes); outputStream.close();
-				 * System.out.println("Base64 decoding successful. Saved as " + outputFilePath);
-				 */
+				outputStream = new FileOutputStream(outputFilePath);
+				outputStream.write(decodedBytes);
+				outputStream.close();
+				System.out.println("Base64 decoding successful. Saved as " + outputFilePath);
 
 				boolean grave = rand.nextDouble() < probabilidad;
 
@@ -161,64 +157,56 @@ public class Principal {
 
 				String topic = String.format("%s.%s.%s", "respuesta", gravedad, consulta.getPacienteID());
 				System.out.println(topic);
-				//consulta.setEnfermedad(line);
-				//consulta.setEnfermedad("murmur");
 				boolean multiple = false;
 				System.out.println(consulta.getEnfermedad());
-				
-				this.getChannel().basicPublish(EXCHANGE_RESULTADO, topic, null, gson.toJson(consulta).getBytes("UTF-8"));
+
+				this.getChannel().basicPublish(EXCHANGE_RESULTADO, topic, null,
+						gson.toJson(consulta).getBytes("UTF-8"));
 
 				this.getChannel().basicAck(envelope.getDeliveryTag(), multiple);
-	
-			} 
-			catch (IOException e) {
-				System.out.println("Error while decoding Base64: " + e.getMessage());
-				handleFail(message , envelope);
 
-			} 
-			catch (InterruptedException e) {
+			} catch (IOException e) {
+				System.out.println("Error while decoding Base64: " + e.getMessage());
+				handleFail(message, envelope);
+
+			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				System.out.println("Interrupted : " + e.getMessage());
-				handleFail(message , envelope);
+				handleFail(message, envelope);
+			} catch (JsonSyntaxException e) {
+				// Manejar la excepción de sintaxis JSON
+				System.out.println("Error de sintaxis JSON: " + e.getMessage());
+				handleFail(message, envelope);
+			} catch (IllegalArgumentException e) {
+				// Handle invalid Base64 input
+				System.out.println("Invalid Base64 input: " + e.getMessage());
+				handleFail(message, envelope);
+			} catch (JsonIOException e) {
+				// Manejar la excepción de entrada/salida JSON
+				System.out.println("Error de entrada/salida JSON: " + e.getMessage());
+				handleFail(message, envelope);
 			}
-			catch (JsonSyntaxException e) {
-			    // Manejar la excepción de sintaxis JSON
-			    System.out.println("Error de sintaxis JSON: " + e.getMessage());
-				handleFail(message , envelope);
-			    // O realizar cualquier otra tarea de manejo de errores
-			}
-			catch (IllegalArgumentException e) {
-			    // Handle invalid Base64 input
-			    System.out.println("Invalid Base64 input: " + e.getMessage());
-			    handleFail(message , envelope);
-			    // Perform error handling or return an error response
-			    // ...
-			}/*catch (JsonIOException e) {
-			    // Manejar la excepción de entrada/salida JSON
-			    System.out.println("Error de entrada/salida JSON: " + e.getMessage());
-			    // O realizar cualquier otra tarea de manejo de errores
-			}*/
 
 		}
 
 		private void handleFail(String message, Envelope envelope) throws IOException {
-			
+
 			Integer intentos = contadores.get(message);
 			boolean reprocesar;
 			boolean multiple;
-			if (intentos == null) intentos = 1;
+			if (intentos == null)
+				intentos = 1;
 
-			
-			System.out.println("ERROR: No se ha podido procesar "+ message +" intentos: "+intentos);
-			
-			if (intentos  == MAX_INTENTOS) {
+			System.out.println("ERROR: No se ha podido procesar " + message + " intentos: " + intentos);
+
+			if (intentos == MAX_INTENTOS) {
 				reprocesar = false;
 				multiple = false;
 				contadores.remove(message);
-				//this.getChannel().basicNack(envelope.getDeliveryTag(), multiple, reprocesar);
+				// this.getChannel().basicNack(envelope.getDeliveryTag(), multiple, reprocesar);
 				this.getChannel().basicReject(envelope.getDeliveryTag(), reprocesar);
 				System.out.println("Rejected");
-			}else {
+			} else {
 				reprocesar = true;
 				multiple = false;
 				contadores.put(message, ++intentos);
@@ -227,7 +215,6 @@ public class Principal {
 			}
 		}
 	}
-	
 
 	public static void main(String[] args) {
 		Principal subscriber = new Principal();
