@@ -16,7 +16,7 @@ import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
-import com.rabbitmq.client.Consumer;
+
 
 public class Principal {
 
@@ -26,8 +26,8 @@ public class Principal {
 	private final static Integer MAX_INTENTOS = 20;
 	final static String QUEUE_NAME = "numeros";
 	final static String DLX_NAME = "el_que_quiera";
-	String pythonInterpreter = "C:/Users/svequ/AppData/Local/Programs/Python/Python311/python.exe";
-	String pythonFile = "C:/Users/svequ/Desktop/IA_Simulator.py";
+	String pythonInterpreter = "python";
+	String pythonFile = "src/IA_Simulator.py";
 	String outputFilePath = "src/resources/audios/"; // Replace with the desired output file path
 	private ConnectionFactory factory;
 	Consulta consulta;
@@ -116,8 +116,7 @@ public class Principal {
 				// Decode the Base64 string
 				decodedBytes = Base64.getDecoder().decode(consulta.getAudio());
 				decodedString = new String(decodedBytes);
-				FileOutputStream outputStream = new FileOutputStream(
-						outputFilePath + consulta.getPacienteID() + ".wav");
+				FileOutputStream outputStream = new FileOutputStream(outputFilePath + consulta.getPacienteID() + ".wav");
 				outputStream.write(decodedBytes);
 				outputStream.close();
 				decodedString = "random";
@@ -143,13 +142,6 @@ public class Principal {
 				// Esperar a que el proceso termine
 				exitCode = process.waitFor();
 				System.out.println("El proceso ha finalizado con código de salida: " + exitCode);
-
-				// Save the decoded bytes to a .wav file
-
-				outputStream = new FileOutputStream(outputFilePath);
-				outputStream.write(decodedBytes);
-				outputStream.close();
-				System.out.println("Base64 decoding successful. Saved as " + outputFilePath);
 
 				boolean grave = rand.nextDouble() < probabilidad;
 

@@ -1,5 +1,5 @@
 Manifest-Version: 1.0
-Built-By: svequ
-Build-Jdk: 18.0.2.1
+Build-Jdk-Spec: 18
+Main-Class: mqReciver.Principal
 Created-By: Maven Integration for Eclipse
 
