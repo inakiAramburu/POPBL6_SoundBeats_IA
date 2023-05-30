@@ -110,14 +110,14 @@
 			<version>2.3.1</version> <!-- Replace with the desired version of
 			JAXB -->
 		</dependency>
-	//dependencias para el pyzone
+	<!--dependencias para el pyzone-->
 
 		<dependency>
 			<groupId>org.python</groupId>
 			<artifactId>jython</artifactId>
 			<version>2.7.2</version>
 		</dependency>
-		
+
 		<dependency>
 		<groupId>org.jpype</groupId>
 		<artifactId>jpype</artifactId>
