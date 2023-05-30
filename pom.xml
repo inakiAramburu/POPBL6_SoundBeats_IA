@@ -16,19 +16,7 @@
 					<target>1.8</target>
 				</configuration>
 			</plugin>
-			<!-- <plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-jar-plugin</artifactId>
-				<version>3.2.0</version> <!-- Reemplaza con la versión actual del
-				complemento -->
-				<configuration>
-					<archive>
-						<manifest>
-							<mainClass>mqReciver.Principal</mainClass>
-						</manifest>
-					</archive>
-				</configuration>
-			</plugin> -->
+			
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
