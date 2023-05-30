@@ -16,9 +16,12 @@ def cargar_mfcc (archivo, duracion=10, sr=22050):
     return data
 
 archivo = sys.argv[1]
-MODELO = 'SoundBeatsModel.h5'
+#MODELO = 'SoundBeatsModel.h5'
 
-model = tf.keras.models.load_model("../" + MODELO)
+MODELO = 'heartbeat_disease'
+
+#model = tf.keras.models.load_model("../" + MODELO)
+model = tf.keras.models.load_model(MODELO)
 
 mfccs = cargar_mfcc(archivo = archivo)
 muestra = np.concatenate((mfccs, mfccs))
