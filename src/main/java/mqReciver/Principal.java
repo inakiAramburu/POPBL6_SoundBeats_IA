@@ -80,7 +80,7 @@ public class Principal {
 			channel.basicCancel(tag);
 			channel.close();*/
 
-			System.out.println("Esperando mensaje");
+			System.out.println("Esperando mensajeMQ");
             Scanner scanner = new Scanner(System.in);
             scanner.nextLine();
 
