@@ -47,7 +47,7 @@ public class Principal {
 			boolean autoAck = true;
 			channel.basicConsume(queueName, autoAck, consumer);
 
-			System.out.println("Esperando mensaje. Pulsa return para terminar");
+			System.out.println("Esperando mensaje. Pulsa return para terminar2");
 			Scanner scanner = new Scanner(System.in);
 			scanner.nextLine();
 
@@ -96,11 +96,11 @@ public class Principal {
 				Integer enfermedad = 0;
 				System.out.println("Salida estándar del proceso:");
 				while ((line = stdoutReader.readLine()) != null) {
-					System.out.println(line);
+					
 					enfermedad = Integer.valueOf(line);
 				}
 				while ((line = stderrReader.readLine()) != null) {
-					System.out.println(line);
+					
 				}
 				String enfermedadNombre = (enfermedad == 0) ? "normal"
 						: (enfermedad == 1) ? "murmur"
