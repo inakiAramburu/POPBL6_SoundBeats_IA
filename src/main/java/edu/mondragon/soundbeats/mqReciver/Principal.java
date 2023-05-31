@@ -67,7 +67,7 @@ public class Principal {
 			String message = new String(body, StandardCharsets.UTF_8);
 			Consulta consulta = gson.fromJson(message, Consulta.class);
 
-			System.out.println("Mensaje recibido (JSON): " + consulta.getPacienteID());
+			System.out.println("Mensaje recibido (JSON)2: " + consulta.getPacienteID());
 			System.out.println("Mensaje recibido (JSON): ha lleado " );
 			try {
 				// Decode the Base64 string
