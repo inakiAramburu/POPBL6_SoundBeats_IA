@@ -1,4 +1,4 @@
-package mqReciver;
+package edu.mondragon.soundbeats.mqReciver;
 
 import java.io.IOException;
 import java.util.Base64;
@@ -16,13 +16,14 @@ import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
-
+import java.io.DataOutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 public class Principal {
 
 	private static final String EXCHANGE_NAME = "diagnostico";
 	private final static String EXCHANGE_RESULTADO = "categorias";
-	private final static Double probabilidad = 0.20;
 	private final static Integer MAX_INTENTOS = 20;
 	final static String QUEUE_NAME = "numeros";
 	final static String DLX_NAME = "el_que_quiera";
@@ -71,11 +72,9 @@ public class Principal {
 				try {
 					this.wait();
 				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
-
 			System.out.println("Esperando mensaje");
 
 		} catch (IOException | TimeoutException e) {
@@ -88,83 +87,73 @@ public class Principal {
 		ConcurrentMap<String, Integer> contadores;
 
 		public MyConsumer(Channel channel) {
-
 			super(channel);
 			contadores = new ConcurrentHashMap<>();
 		}
 
 		public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body)
 				throws IOException {
-
 			String message = new String(body, StandardCharsets.UTF_8);
 			Consulta consulta;
 			byte[] decodedBytes;
-			String decodedString;
-			String[] command;
-			ProcessBuilder processBuilder;
-			Process process;
-			BufferedReader stdoutReader;
-			BufferedReader stderrReader;
-			String line;
-			int exitCode;
 
 			try {
-
 				consulta = gson.fromJson(message, Consulta.class);
 				System.out.println("Mensaje recibido (JSON): " + consulta.getPacienteID());
 
 				// Decode the Base64 string
 				decodedBytes = Base64.getDecoder().decode(consulta.getAudio());
-				decodedString = new String(decodedBytes);
-				FileOutputStream outputStream = new FileOutputStream(outputFilePath + consulta.getPacienteID() + ".wav");
+
+				FileOutputStream outputStream = new FileOutputStream(
+						outputFilePath + consulta.getPacienteID() + ".wav");
 				outputStream.write(decodedBytes);
 				outputStream.close();
-				decodedString = "random";
 
-				// Construir el comando de ejecución
-				command = new String[] { pythonInterpreter, pythonFile, decodedString };
+				String respuesta = request(outputFilePath + consulta.getPacienteID() + ".wav");
 
-				// Crear el proceso y ejecutar el comando
-				processBuilder = new ProcessBuilder(command);
-				process = processBuilder.start();
-
-				// Leer la salida del proceso
-				stdoutReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-				stderrReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-
-				// Leer la salida estándar
-				System.out.println("Salida estándar del proceso:");
-				while ((line = stdoutReader.readLine()) != null) {
-					System.out.println(line);
-					consulta.setEnfermedad(line);
+				String enfermedadNombre, gravedad;
+				System.out.println(respuesta);
+				switch (respuesta) {
+					case "0":
+						enfermedadNombre = "normal";
+						gravedad = "normal";
+						break;
+					case "1":
+						enfermedadNombre = "murmur";
+						gravedad = "grave";
+						break;
+					case "2":
+						enfermedadNombre = "extrastole";
+						gravedad = "grave";
+						break;
+					case "3":
+						enfermedadNombre = "artifact";
+						gravedad = "normal";
+						break;
+					case "4":
+						enfermedadNombre = "extrahls";
+						gravedad = "grave";
+						break;
+					default:
+						enfermedadNombre = "error";
+						gravedad = "error";
+						break;
 				}
 
-				// Esperar a que el proceso termine
-				exitCode = process.waitFor();
-				System.out.println("El proceso ha finalizado con código de salida: " + exitCode);
-
-				boolean grave = rand.nextDouble() < probabilidad;
-
-				String gravedad = (grave) ? "grave" : "normal";
-
 				String topic = String.format("%s.%s.%s", "respuesta", gravedad, consulta.getPacienteID());
-				System.out.println(topic);
-				boolean multiple = false;
-				System.out.println(consulta.getEnfermedad());
+				System.out.println("Respuesta: " + enfermedadNombre);
 
+				consulta.setEnfermedad(enfermedadNombre);
 				this.getChannel().basicPublish(EXCHANGE_RESULTADO, topic, null,
 						gson.toJson(consulta).getBytes("UTF-8"));
 
+				boolean multiple = false;
 				this.getChannel().basicAck(envelope.getDeliveryTag(), multiple);
 
 			} catch (IOException e) {
 				System.out.println("Error while decoding Base64: " + e.getMessage());
 				handleFail(message, envelope);
 
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				System.out.println("Interrupted : " + e.getMessage());
-				handleFail(message, envelope);
 			} catch (JsonSyntaxException e) {
 				// Manejar la excepción de sintaxis JSON
 				System.out.println("Error de sintaxis JSON: " + e.getMessage());
@@ -196,6 +185,10 @@ public class Principal {
 				multiple = false;
 				contadores.remove(message);
 				// this.getChannel().basicNack(envelope.getDeliveryTag(), multiple, reprocesar);
+				String topic = String.format("%s.%s.%s", "respuesta", "normal", consulta.getPacienteID());
+				consulta.setEnfermedad("Ha ocurrido un error, intentelo de nuevo mas tarde");
+				this.getChannel().basicPublish(EXCHANGE_RESULTADO, topic, null,
+						gson.toJson(consulta).getBytes("UTF-8"));
 				this.getChannel().basicReject(envelope.getDeliveryTag(), reprocesar);
 				System.out.println("Rejected");
 			} else {
@@ -206,6 +199,44 @@ public class Principal {
 				System.out.println("Resent");
 			}
 		}
+	}
+
+	public String request(String path) {
+		StringBuilder response = new StringBuilder();
+		try {
+			String url = "http://localhost:5000/predict"; // URL del endpoint
+
+			// Crea la conexión HTTP
+			HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+
+			// Configura la conexión para peticiones POST
+			connection.setRequestMethod("POST");
+			connection.setDoOutput(true);
+
+			// Establece los encabezados de la petición
+			connection.setRequestProperty("Content-Type", "text/plain");
+
+			// Escribe el cuerpo de la solicitud en el cuerpo de la petición
+			byte[] requestBodyBytes = path.getBytes(StandardCharsets.UTF_8);
+
+			connection.setRequestProperty("Content-Length", String.valueOf(requestBodyBytes.length));
+			DataOutputStream dataOutputStream = new DataOutputStream(connection.getOutputStream());
+			dataOutputStream.write(requestBodyBytes);
+			dataOutputStream.flush();
+			dataOutputStream.close();
+
+			// Obtiene la respuesta del servidor
+			BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+			String line;
+
+			while ((line = reader.readLine()) != null) {
+				response.append(line);
+			}
+			reader.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return response.toString();
 	}
 
 	public static void main(String[] args) {
