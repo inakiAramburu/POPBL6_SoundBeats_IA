@@ -1,4 +1,4 @@
-package edu.mondragon.soundbeats.mqReciver;
+package mqReciver;
 
 import java.io.IOException;
 import java.util.Base64;
