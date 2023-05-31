@@ -19,6 +19,7 @@ import java.util.Map;
 import java.io.DataOutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import edu.mondragon.soundbeats.Consulta;
 
 public class Principal {
 
