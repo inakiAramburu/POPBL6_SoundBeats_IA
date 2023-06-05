@@ -50,7 +50,7 @@ public class Principal {
 			channel.exchangeDeclare(EXCHANGE_RESULTADO, "topic");
 			channel.exchangeDeclare(DLX_NAME, "fanout");
 
-			boolean durable = false;
+			boolean durable = true;
 			boolean exclusive = false;
 			boolean autodelete = false;
 			Map<String, Object> arguments = new HashMap<>();
@@ -123,12 +123,12 @@ public class Principal {
 						gravedad = "grave";
 						break;
 					case "2":
-						enfermedadNombre = "extrastole";
-						gravedad = "grave";
-						break;
-					case "3":
 						enfermedadNombre = "artifact";
 						gravedad = "normal";
+						break;
+					case "3":
+						enfermedadNombre = "extrastole";
+						gravedad = "grave";
 						break;
 					case "4":
 						enfermedadNombre = "extrahls";
@@ -144,7 +144,7 @@ public class Principal {
 				System.out.println("Respuesta: " + enfermedadNombre);
 
 				consulta.setEnfermedad(enfermedadNombre);
-				this.getChannel().basicPublish(EXCHANGE_RESULTADO, topic, null,
+				this.getChannel().basicPublish(EXCHANGE_RESULTADO, topic, MessageProperties.PERSISTENT_TEXT_PLAIN,
 						gson.toJson(consulta).getBytes("UTF-8"));
 
 				boolean multiple = false;
@@ -167,7 +167,6 @@ public class Principal {
 				System.out.println("Error de entrada/salida JSON: " + e.getMessage());
 				handleFail(message, envelope);
 			}
-
 		}
 
 		private void handleFail(String message, Envelope envelope) throws IOException {
@@ -184,11 +183,12 @@ public class Principal {
 				reprocesar = false;
 				multiple = false;
 				contadores.remove(message);
-				// this.getChannel().basicNack(envelope.getDeliveryTag(), multiple, reprocesar);
+
 				String topic = String.format("%s.%s.%s", "respuesta", "normal", consulta.getPacienteID());
 				consulta.setEnfermedad("Ha ocurrido un error, intentelo de nuevo mas tarde");
-				this.getChannel().basicPublish(EXCHANGE_RESULTADO, topic, null,
+				this.getChannel().basicPublish(EXCHANGE_RESULTADO, topic, MessageProperties.PERSISTENT_TEXT_PLAIN,
 						gson.toJson(consulta).getBytes("UTF-8"));
+				
 				this.getChannel().basicReject(envelope.getDeliveryTag(), reprocesar);
 				System.out.println("Rejected");
 			} else {
