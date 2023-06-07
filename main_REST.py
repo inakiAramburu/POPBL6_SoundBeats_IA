@@ -21,7 +21,7 @@ def cargar_mfcc (archivo, duracion=10, sr=22050):
 
 
 MODELO = 'SoundBeatsModel.h5'
-model = tf.keras.models.load_model("../" + MODELO)
+model = tf.keras.models.load_model(MODELO)
 
 @app.route('/predict',methods=['POST','GET'])
 def predict():
