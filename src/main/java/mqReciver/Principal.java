@@ -114,23 +114,23 @@ public class Principal {
 				String enfermedadNombre, gravedad;
 				System.out.println(respuesta);
 				switch (respuesta) {
-					case "0":
+					case "[0]":
 						enfermedadNombre = "normal";
 						gravedad = "normal";
 						break;
-					case "1":
+					case "[1]":
 						enfermedadNombre = "murmur";
 						gravedad = "grave";
 						break;
-					case "2":
+					case "[2]":
 						enfermedadNombre = "artifact";
 						gravedad = "normal";
 						break;
-					case "3":
+					case "[3]":
 						enfermedadNombre = "extrastole";
 						gravedad = "grave";
 						break;
-					case "4":
+					case "[4]":
 						enfermedadNombre = "extrahls";
 						gravedad = "grave";
 						break;
